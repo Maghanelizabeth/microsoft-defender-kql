@@ -1,0 +1,18 @@
+// Description: Detects additions of accounts to the local Administrators group (S-1-5-32-544), indicating potential privilege escalation or unauthorized administrative access
+// MITRE ATT&CK: T1098 (Account Manipulation), T1078 (Valid Accounts)
+// Data Source: DeviceEvents
+// Severity: High
+// False Positives: IT administration tools, endpoint management systems, automated provisioning systems
+
+DeviceEvents
+| where ActionType == "UserAccountAddedToLocalGroup"
+| extend Details = parse_json(AdditionalFields)
+| extend
+    GroupName = tostring(Details.GroupName),
+    GroupDomainName = tostring(Details.GroupDomainName),
+    GroupSid = tostring(Details.GroupSid)
+// Filter Local Administrators
+| where GroupSid == "S-1-5-32-544"
+| summarize LocalAdmins = make_set(AccountSid) by DeviceName
+| extend TotalLocalAdmins = array_length(LocalAdmins)
+| sort by TotalLocalAdmins
