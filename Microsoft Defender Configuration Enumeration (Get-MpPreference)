@@ -1,0 +1,17 @@
+// Description: Detects execution of Get-MpPreference via PowerShell or script execution paths to enumerate Microsoft Defender configuration settings, which may indicate reconnaissance prior to security evasion or malware deployment
+// MITRE ATT&CK: T1082 (System Information Discovery), T1562.001 (Impair Defenses - Disable or Modify Tools)
+// Data Source: DeviceProcessEvents, DeviceEvents
+// Severity: Medium-High
+// False Positives: IT security auditing scripts, endpoint management tools, vulnerability assessment scanners
+
+let ProcessBased = DeviceProcessEvents
+| where ProcessCommandLine has "Get-MpPreference"
+| extend Table = "DeviceProcessEvents"
+| project-reorder Table, Timestamp, DeviceName, ProcessCommandLine, InitiatingProcessFileName;
+let EventBased = DeviceEvents
+| extend Command = parse_json(AdditionalFields).Command
+| where  Command == "Get-MpPreference"
+| extend ScriptLocation = extract(@"literalPath '(.*?)'", 0, InitiatingProcessCommandLine)
+| extend Table = "DeviceEvents"
+| project-reorder Table, Timestamp, DeviceName, InitiatingProcessCommandLine, InitiatingProcessParentFileName, ScriptLocation;
+union ProcessBased, EventBased
