@@ -1,0 +1,9 @@
+// Description: Detects creation of scheduled tasks excluding system-level activity, indicating potential persistence or malicious automation
+// Data Source: DeviceEvents
+// Severity: High (Persistence / Post-Compromise)
+// MITRE ATT&CK: T1053.005
+// False Positives: Software installers, IT automation tools, system maintenance scripts, enterprise deployment systems
+
+DeviceEvents 
+| where ActionType == "ScheduledTaskCreated"
+  and InitiatingProcessAccountSid != "S-1-5-18"
