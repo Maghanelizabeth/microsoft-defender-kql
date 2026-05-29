@@ -1,3 +1,10 @@
+// Description: Identifies and summarizes device connections to known malicious CIDR ranges
+// MITRE ATT&CK: T1071, T1105
+// Data Source: DeviceNetworkEvents
+// Severity: High
+// Hunt Type: Threat Intelligence / Network IOC
+// False Positives: Shared hosting providers, VPN ranges, cloud infrastructure overlap
+
 let CIDR1 = "185.186.244.0/24";
 let CIDR2 = "172.94.9.0/24";
 DeviceNetworkEvents
