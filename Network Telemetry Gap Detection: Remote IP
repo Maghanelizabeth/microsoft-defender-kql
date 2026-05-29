@@ -1,0 +1,9 @@
+// Description: Identifies network events where RemoteIP is null or improperly populated, indicating telemetry gaps or potential logging anomalies
+// Data Source: DeviceNetworkEvents
+// Severity: Medium (Telemetry Integrity Issue)
+// Category: Data Quality / Visibility Monitoring
+// False Positives: Sensor ingestion delays, schema mismatches, transient network parsing issues
+
+DeviceNetworkEvents
+| where RemoteIP == " "
+| summarize LastSeen=max(Timestamp), Devices=tostring(makeset(DeviceName, 5))
