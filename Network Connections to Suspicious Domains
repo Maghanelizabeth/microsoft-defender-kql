@@ -1,0 +1,31 @@
+// Description: Detects outbound network traffic to known suspicious or advisory domains using IOC-based matching against parsed URLs and raw network traffic logs
+// Data Source: DeviceNetworkEvents
+// Severity: High (IOC-based detection)
+// MITRE ATT&CK: T1071, T1105, T1566
+// False Positives: Security scanners, sandbox environments, research traffic, CDN overlap
+
+let SuspiciousDomains = dynamic([
+  
+]);
+DeviceNetworkEvents
+| where Timestamp > ago(60d)
+| where isnotempty(RemoteUrl)
+// Extract the domain/host from the URL
+| extend UrlDomain = tostring(parse_url(RemoteUrl).Host)
+// Match either by parsed domain or as a substring in the full URL
+| where UrlDomain in~ (SuspiciousDomains)
+   or RemoteUrl has_any (SuspiciousDomains)
+| project
+    Timestamp,
+    DeviceName,
+    UrlDomain,
+    RemoteIP,
+    RemoteUrl,
+    RemotePort,
+    Protocol,
+    ActionType,
+    InitiatingProcessAccountName,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine,
+    ReportId
+| order by Timestamp desc
