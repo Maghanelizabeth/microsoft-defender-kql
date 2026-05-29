@@ -5,7 +5,7 @@
 // False Positives: Red team tools, penetration testing frameworks, administrative remote execution tools (PsExec in IT environments)
 
 let minTimeRange = ago(10d);
-// this is what should be constantly tweaked with default C2 framework names, search uses has_any (wildcard)
+// modify with default C2 framework names
 let badPipeNames = pack_array(
     '\\psexec',                                     // PSexec default pipe
     '\\paexec',                                     // PSexec default pipe
