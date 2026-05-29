@@ -1,0 +1,10 @@
+// Description: Retrieves registry modification activity for a specific endpoint to support forensic analysis of persistence mechanisms and system configuration changes
+// Data Source: DeviceRegistryEvents
+// Severity: Informational (Forensic / IR Query)
+// Category: Endpoint Forensics / Persistence Investigation
+// False Positives: Software installation, system updates, IT administration changes
+
+DeviceRegistryEvents
+| where ActionType != "RegistryKey"
+| where DeviceName == "  "
+| project Timestamp, DeviceName, InitiatingProcessFileName, RegistryKey, ActionType, InitiatingProcessCommandLine
