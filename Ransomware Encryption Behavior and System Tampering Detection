@@ -1,0 +1,23 @@
+// Description: Detects mass file renaming or encryption activity combined with system tampering commands indicative of ransomware execution and impact behavior
+// Data Source: DeviceFileEvents, DeviceProcessEvents
+// Severity: Critical (Impact / Ransomware)
+// MITRE ATT&CK: T1486, T1490, T1562
+// False Positives: Legitimate bulk file processing, backup software, encryption utilities, system maintenance scripts
+
+let TimeRange = 10h;
+DeviceFileEvents
+| where Timestamp > ago(TimeRange)
+| where ActionType == "FileRenamed"
+    or ActionType == "FileCreated"
+| where FileName endswith ".encrypted" or FileName endswith ".locked" or FileName endswith ".crypt" or FileName endswith ".enc" or FileName endswith ".lockbit"
+| summarize FilesChanged = count(), FirstSeen=min(Timestamp), LastSeen=max(Timestamp)
+    by DeviceName, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessId, FolderPath
+| where FilesChanged > 50
+| join kind=inner (
+    DeviceProcessEvents
+    | where Timestamp > ago(TimeRange)
+    | where ProcessCommandLine has_any ("vssadmin", "shadowcopy", "bcdedit", "wmic", "rundll32", "cipher", "schtasks", "powershell", "bitsadmin", "reg delete")
+    | summarize by DeviceName, InitiatingProcessFileName, ProcessCommandLine
+) on DeviceName
+| project DeviceName, FilesChanged, FirstSeen, LastSeen, InitiatingProcessFileName, InitiatingProcessCommandLine, FolderPath
+| sort by FilesChanged desc
