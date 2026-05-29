@@ -1,0 +1,32 @@
+DeviceProcessEvents
+| where Timestamp > ago(14d)
+| where InitiatingProcessCommandLine != "svchost.exe -k LocalService -p -s WebClient"
+| where InitiatingProcessCommandLine !contains "cmd.exe /c cmd /C nslookup -timeout"
+| where ProcessCommandLine !contains "cmd.exe /c cmd /C nslookup -timeout=2"
+| where ProcessCommandLine !contains "powershell  -ExecutionPolicy Bypass -NoProfile -Command $Path = $env:TEMP; $Installer = 'chrome_installer.exe'; Invoke-WebRequest -Uri 'http://dl.google.com/chrome/install/375.126/chrome_installer.exe' -OutFile $Path"
+| where InitiatingProcessCommandLine !contains "svchost.exe -k WebClientGroup -s WebClient"
+| where ProcessCommandLine !contains "powershell.exe -command Invoke-RestMethod http://metadata.google.internal"
+| where ProcessCommandLine !contains "169.254.169.254"
+| where InitiatingProcessCommandLine !contains "TaniumCX.exe"
+| where InitiatingProcessCommandLine !contains "Fiery Software Manager.exe"
+| where InitiatingProcessCommandLine  !contains "BESClient.exe"
+| where InitiatingProcessCommandLine !contains "Fiery Command WorkStation.exe"
+| where InitiatingProcessCommandLine !contains "svchost.exe -k WebClientGroup"
+| where 
+    // Known LOLBins and tools used by APT34
+    FileName in~ ("powershell.exe", "cmd.exe", "wmic.exe", "certutil.exe", "mshta.exe", "rundll32.exe", "regsvr32.exe", "bitsadmin.exe", "curl.exe")
+    or ProcessCommandLine has_any (
+        "-EncodedCommand",                 // PowerShell obfuscation
+        "Invoke-WebRequest", "DownloadString", "IEX", "iex",   // Common download methods
+        "net user", "net group", "net localgroup",              // Recon / User enumeration
+        "nltest", "whoami", "ipconfig", "query user"            // System enumeration
+    )
+| extend CleanCmd = tolower(ProcessCommandLine)
+| where CleanCmd has_any (
+        "cscript", "wscript", ".js", ".vbs",         // Script-based web shells
+        "http", "https",                             // External connections
+        "/urlcache", "/decode",                     // certutil indicators
+        "dns", "nslookup", "Resolve-DnsName"         // DNS-based tunneling
+    )
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, ReportId, DeviceId
+| order by Timestamp desc
