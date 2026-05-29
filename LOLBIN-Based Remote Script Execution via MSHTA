@@ -1,0 +1,16 @@
+// Description: Detects execution of mshta.exe with remote HTTP/HTTPS payloads indicative of fileless malware or LOLBIN abuse
+// Data Source: DeviceProcessEvents
+// Severity: High (Execution / Fileless Attack)
+// MITRE ATT&CK: T1218.005 (MSHTA), T1059.007 (Scripting), T1566 (Phishing)
+// False Positives: Legacy enterprise scripts, IT automation tools, internal web-based execution systems
+
+DeviceProcessEvents
+| where FileName =~ "mshta.exe"
+| where ProcessCommandLine has_any ("http:", "https:")
+| project Timestamp,
+          DeviceName,
+          AccountName,
+          FileName,
+          ProcessCommandLine,
+          InitiatingProcessFileName
+| order by Timestamp desc
