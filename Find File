@@ -1,3 +1,8 @@
+// Description: Hunts for file activity involving bridge.exe across endpoints
+// Data Source: DeviceFileEvents
+// Severity: Medium
+// Hunt Type: IOC Search
+
 DeviceFileEvents
 | where FileName contains "bridge.exe"
 | project Timestamp, DeviceName, FileName, ActionType, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath 
