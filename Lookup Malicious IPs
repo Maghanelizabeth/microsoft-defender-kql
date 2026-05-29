@@ -1,3 +1,10 @@
+// Description: Detects endpoint network connections to known suspicious or malicious IP addresses
+// MITRE ATT&CK: T1071, T1105, T1571
+// Data Source: DeviceNetworkEvents
+// Severity: High
+// Hunt Type: IOC Search
+// False Positives: Shared infrastructure, CDN overlap, cloud providers, reused hosting
+
 let IPsToLookup = datatable(IPAddress: string) [
 'IPADDRESS'
 ];
