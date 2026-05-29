@@ -1,0 +1,10 @@
+// Description: Aggregates endpoint security tampering attempts including Defender protection modifications, registry changes, and defense evasion actions to identify potentially compromised devices
+// MITRE ATT&CK: T1562 (Impair Defenses), T1562.001 (Disable or Modify Tools)
+// Data Source: DeviceEvents
+// Severity: High
+// False Positives: Security testing tools, endpoint management software, IT troubleshooting scripts
+
+DeviceEvents
+| where ActionType == "TamperingAttempt"
+| extend TamperingAction = tostring(parse_json(AdditionalFields).TamperingAction), Status = tostring(parse_json(AdditionalFields).Status), Target = tostring(parse_json(AdditionalFields).Target)
+| summarize TotalActions = count(), Actions = make_set(TamperingAction), Targets = make_set(Target), RegistryNames = make_set(RegistryValueName), InitatingCommandLine = make_set(InitiatingProcessCommandLine) by DeviceName
