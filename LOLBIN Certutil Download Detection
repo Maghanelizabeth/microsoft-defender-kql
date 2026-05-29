@@ -1,0 +1,10 @@
+// Description: Detects use of certutil.exe for downloading files via HTTP using URLCache functionality, commonly associated with LOLBIN abuse
+// MITRE ATT&CK: T1105, T1218
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Legitimate IT automation scripts or software deployment tools using certutil for certificate handling
+
+DeviceProcessEvents
+| where FileName == "certutil.exe"
+| where tolower(ProcessCommandLine) has_all ("http", "urlcache", "-f")
+| project-reorder Timestamp, ProcessCommandLine, FileName, InitiatingProcessAccountUpn
