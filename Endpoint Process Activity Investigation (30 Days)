@@ -1,0 +1,10 @@
+// Description: Retrieves long-term process execution history for a specific device to support forensic investigation and attack timeline reconstruction
+// Data Source: DeviceProcessEvents
+// Severity: Informational (Forensic / IR Query)
+// Category: Endpoint Investigation / Host Forensics
+// False Positives: None (pure investigative query)
+
+DeviceProcessEvents
+| where DeviceName == "<insert Device>"
+| where Timestamp > ago(30d)
+| project Timestamp, FileName, ProcessCommandLine, InitiatingProcessFileName
