@@ -1,0 +1,26 @@
+// Network events to advisory domains using DeviceNetworkEvents (Advanced Hunting)
+let SuspiciousDomains = dynamic([
+  
+]);
+DeviceNetworkEvents
+| where Timestamp > ago(60d)
+| where isnotempty(RemoteUrl)
+// Extract the domain/host from the URL
+| extend UrlDomain = tostring(parse_url(RemoteUrl).Host)
+// Match either by parsed domain or as a substring in the full URL
+| where UrlDomain in~ (SuspiciousDomains)
+   or RemoteUrl has_any (SuspiciousDomains)
+| project
+    Timestamp,
+    DeviceName,
+    UrlDomain,
+    RemoteIP,
+    RemoteUrl,
+    RemotePort,
+    Protocol,
+    ActionType,
+    InitiatingProcessAccountName,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine,
+    ReportId
+| order by Timestamp desc
