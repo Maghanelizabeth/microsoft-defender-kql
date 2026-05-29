@@ -1,3 +1,9 @@
+// Description: Detects suspicious use of PowerShell, Certutil, MSHTA, scheduled tasks, and archive tooling commonly associated with attacker activity
+// MITRE ATT&CK: T1059, T1218, T1105, T1053
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Administrative automation, software deployment tools, patch management utilities
+
 DeviceProcessEvents
 | where Timestamp > ago(7d)
 | where 
