@@ -1,0 +1,20 @@
+// Description: Detects creation of new email inbox rules in Exchange Online which may indicate mailbox compromise or persistence mechanisms
+// Data Source: CloudAppEvents
+// Severity: High (Email Account Compromise / Persistence)
+// MITRE ATT&CK: T1098.002, T1564.008
+// False Positives: Legitimate user email organization rules, enterprise automation, helpdesk-assisted mailbox configuration
+
+CloudAppEvents
+| where ActionType == "New-InboxRule"
+| project
+    Timestamp,
+    AccountDisplayName,
+    ActionType,
+    Application,
+    RawEventData,
+    IPAddress,
+    ReportId, 
+    AdditionalFields,
+    LastSeenForUser
+| sort by Timestamp desc
+
