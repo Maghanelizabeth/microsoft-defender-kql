@@ -1,0 +1,11 @@
+// Description: Detects execution of burn.exe located in non-standard or suspicious Microsoft Windows directory paths, which may indicate malware masquerading or unauthorized tooling
+// MITRE ATT&CK: T1036 (Masquerading), T1059 (Execution)
+// Data Source: DeviceFileEvents
+// Severity: High
+// False Positives: Legacy software installers, CD/DVD burning tools, custom enterprise imaging utilities
+
+DeviceFileEvents
+| where FolderPath has @"\microsoft\windows\burnuntil"
+    and FileName =~ "burn.exe"
+| project Timestamp, DeviceName, FolderPath, FileName, InitiatingProcessFileName, ActionType
+| order by Timestamp desc
