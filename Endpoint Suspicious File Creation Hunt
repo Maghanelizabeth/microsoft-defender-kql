@@ -1,0 +1,28 @@
+// Description: Detects potentially malicious file creation events and correlates them with execution activity within a short time window, focusing on high-risk file types and suspicious naming patterns
+// MITRE ATT&CK: T1105, T1204, T1059
+// Data Source: DeviceFileEvents, DeviceProcessEvents
+// Severity: High
+// Scope: Endpoint-specific (ws-104060-lp)
+// False Positives: Software installers, IT deployment tools, temporary scripts, developer tooling
+
+DeviceFileEvents
+| where DeviceName has "DEVICENAME"
+| where Timestamp > ago(30d)
+| where FolderPath !contains "Defender"
+| where FileName !contains "officeai"
+| extend FileExtension = tostring(split(FileName, ".")[-1])
+| extend LowerFileName = tolower(FileName)
+| where FolderPath !startswith @"C:\Windows"  // exclude typical safe paths
+    and FolderPath !contains @"Program Files"
+| where FileExtension in~ ("exe", "dll", "bat", "ps1", "vbs", "js", "hta", "scr", "com")
+    or LowerFileName has_any ("temp", "payload", "update", "patch", "shell", "mimikatz", "cmd", "backdoor", "tool")
+| join kind=leftouter (
+    DeviceProcessEvents
+    | where Timestamp > ago(30d)
+    | project FileCreationTime=Timestamp, DeviceName, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFileName, InitiatingProcessSHA256, ProcessId
+) on DeviceName
+| where abs(datetime_diff("minute", Timestamp, FileCreationTime)) < 5
+| project Timestamp, FileName, FolderPath, FileExtension, SHA256, FileCreationTime, 
+          InitiatingProcessAccountName, InitiatingProcessFileName, InitiatingProcessCommandLine,
+          InitiatingProcessSHA256
+| order by Timestamp desc
