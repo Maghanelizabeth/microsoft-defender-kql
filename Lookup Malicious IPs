@@ -1,0 +1,7 @@
+let IPsToLookup = datatable(IPAddress: string) [
+'IPADDRESS'
+];
+DeviceNetworkEvents
+| where RemoteIP in (IPsToLookup)
+| project Timestamp, DeviceName, RemoteIP, LocalIP, LocalPort, InitiatingProcessFileName, RemotePort, ActionType, InitiatingProcessCommandLine, InitiatingProcessFolderPath, RemoteUrl
+| sort by Timestamp desc
