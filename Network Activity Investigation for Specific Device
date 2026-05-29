@@ -1,0 +1,9 @@
+// Description: Retrieves all network activity from a single endpoint including process-level attribution, remote connections, and command-line context for forensic investigation
+// MITRE ATT&CK: T1071 (Application Layer Protocol), T1041 (Exfiltration Over C2 Channel), T1021 (Remote Services)
+// Data Source: DeviceNetworkEvents
+// Severity: Investigation / IR tool (not an alert by itself)
+// False Positives: None (scope-limited forensic query)
+
+DeviceNetworkEvents
+| where DeviceName == "DEVICENAME"
+| project Timestamp, DeviceName, InitiatingProcessFileName, RemoteIP, RemotePort, InitiatingProcessCommandLine, ActionType, InitiatingProcessAccountName, InitiatingProcessFolderPath
