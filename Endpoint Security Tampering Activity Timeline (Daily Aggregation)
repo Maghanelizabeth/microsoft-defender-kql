@@ -1,0 +1,21 @@
+// Description: Aggregates endpoint security tampering attempts by device and day, providing visibility into repeated defense evasion activity and potential compromise timelines
+// MITRE ATT&CK: T1562 (Impair Defenses), T1562.001 (Disable or Modify Tools)
+// Data Source: DeviceEvents
+// Severity: High
+// False Positives: Security testing, endpoint management operations, IT troubleshooting activities
+
+DeviceEvents
+| where ActionType == "TamperingAttempt"
+| extend 
+    TamperingAction = tostring(parse_json(AdditionalFields).TamperingAction), 
+    Status = tostring(parse_json(AdditionalFields).Status), 
+    Target = tostring(parse_json(AdditionalFields).Target),
+    EventDate = format_datetime(Timestamp, 'yyyy-MM-dd')
+| summarize 
+    TotalActions = count(), 
+    Actions = make_set(TamperingAction), 
+    Targets = make_set(Target), 
+    RegistryNames = make_set(RegistryValueName), 
+    InitatingCommandLine = make_set(InitiatingProcessCommandLine) 
+    by DeviceName, EventDate
+| order by EventDate desc, DeviceName
