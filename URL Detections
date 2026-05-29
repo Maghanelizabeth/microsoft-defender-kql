@@ -1,0 +1,6 @@
+DeviceNetworkEvents  
+| where Timestamp > ago(30d)
+| where RemoteUrl has_any (dynamic([ "microsoft"
+]))
+| project Timestamp, DeviceName, RemoteUrl, ActionType, InitiatingProcessCommandLine
+| top 100 by Timestamp desc
