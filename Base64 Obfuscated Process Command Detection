@@ -1,0 +1,14 @@
+// Description: Detects potentially malicious base64-encoded commands executed via PowerShell or CMD
+// MITRE ATT&CK: T1027, T1059.001
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Legitimate software installers, enterprise backup tools, security agents using encoded parameters
+
+DeviceProcessEvents
+| where ProcessCommandLine has_any ("powershell", "cmd")
+| where ProcessCommandLine matches regex @"[A-Za-z0-9+/]{100,}={0,2}"
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, InitiatingProcessAccountName
+| where ProcessCommandLine !contains "Defender"
+| where ProcessCommandLine !contains " VAByAHkAIAAgAHsAIAAgACAAIAAgACAA"
+| where ProcessCommandLine !contains "Veritas"
+| where InitiatingProcessAccountName !contains "system"
