@@ -1,0 +1,25 @@
+// Description: Detects registry deletion or modification attempts using native Windows tools and PowerShell commands associated with defense evasion and system tampering
+// Data Source: DeviceProcessEvents
+// Severity: High (Defense Evasion / System Tampering)
+// MITRE ATT&CK: T1112, T1070, T1562
+// False Positives: IT cleanup scripts, software uninstallers, system configuration changes, administrative automation
+
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName in ("reg.exe", "powershell.exe", "cmd.exe")
+| where ProcessCommandLine has_any (
+    "reg delete",
+    "reg clear",
+    "Remove-ItemProperty",
+    "Remove-Item -Path HK",
+    "Clear-ItemProperty",
+    "DeleteSubKey",
+    "DeleteValue"
+)
+| project Timestamp,
+          DeviceName,
+          FileName,
+          ProcessCommandLine,
+          InitiatingProcessFileName,
+          InitiatingProcessAccountName
+| order by Timestamp desc
