@@ -1,0 +1,10 @@
+// Description: Detects removal of Outlook/Exchange inbox rules after email delivery, indicating potential mailbox tampering or post-compromise cleanup activity
+// Data Source: EmailPostDeliveryEvents
+// Severity: Medium to High (Email Security / Identity Compromise)
+// MITRE ATT&CK: T1114.003, T1078, T1070
+// False Positives: User-initiated mailbox cleanup, IT support actions, migration or policy changes
+
+EmailPostDeliveryEvents
+| where Action == "Remove-InboxRule" // "Remove-InboxRule" is typically logged when a rule is deleted
+| project Timestamp, RecipientEmailAddress, ActionResult
+| order by Timestamp desc
