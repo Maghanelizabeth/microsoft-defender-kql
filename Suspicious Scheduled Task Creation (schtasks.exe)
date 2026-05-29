@@ -1,0 +1,16 @@
+// Description: Detects potentially malicious scheduled task creation or modification using schtasks.exe, including execution of scripts, LOLBins, or external payloads, while filtering known enterprise and vendor tasks
+// MITRE ATT&CK: T1053.005 (Scheduled Task), T1059 (Command Execution)
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Enterprise software update tasks, IT automation scripts, system maintenance jobs
+
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName =~ "schtasks.exe"
+| where ProcessCommandLine has_any("/create", "/change", "/F", "/TR", "/TN")
+| extend CommandLower = tolower(ProcessCommandLine)
+| extend IsSuspiciousPayload = CommandLower has_any(
+    "powershell", "cmd", "wscript", "mshta", "rundll32", "regsvr32", ".js", ".vbs", ".bat", ".ps1", "curl", "wget", "http"
+)
+| extend IsUnusualParent = InitiatingProcessFileName has_any (
+    "winword.exe", "excel.exe", "outlook.exe", "teams.exe", "chrome.exe", "firefox.exe"
