@@ -1,0 +1,22 @@
+// Description: Detects successful device logons originating from external IPs not associated with known devices or internal network ranges
+// MITRE ATT&CK: T1078, T1021
+// Data Source: DeviceLogonEvents, DeviceNetworkInfo, IdentityLogonEvents
+// Severity: High
+// False Positives: VPN usage, roaming users, cloud-hosted admin access, remote workforce connections
+
+DeviceLogonEvents
+| where RemoteIPType == "Public"
+| where ActionType != "LogonAttempted"
+| where ActionType != "LogonFailed"
+| join kind=leftanti (
+    DeviceNetworkInfo
+    | project NetworkInfo = todynamic(IPAddresses )
+    | mvexpand NetworkInfo
+    | project IpAddress = tostring(parse_json(NetworkInfo).IPAddress)
+    | distinct IpAddress
+) on $left.RemoteIP == $right.IpAddress // Removes any IP addresses assigned to a device
+| join kind=leftanti (
+    IdentityLogonEvents
+    | where ISP != "INTERNAL_NETWORK"
+) on $left.RemoteIP == $right.IPAddress // Remove any IP addresses identified as internal by Microsoft Cloud App Security
+| summarize EarliestEvent = min(Timestamp), LatestEvent = max(Timestamp), Instances = count(), DistinctMachines = dcount(DeviceId) by AccountDomain, AccountName, LogonType, RemoteIP, ActionType
