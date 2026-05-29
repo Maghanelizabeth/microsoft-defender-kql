@@ -1,0 +1,28 @@
+// Description: Detects schtasks.exe usage combined with suspicious payload execution indicators such as PowerShell, mshta, rundll32, and script-based tools, often associated with persistence or malware execution
+// MITRE ATT&CK: T1053.005 (Scheduled Task), T1059 (Command Execution)
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Legitimate IT automation tasks, software update schedulers, enterprise deployment scripts
+
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName =~ "schtasks.exe"
+| extend CommandLower = tolower(ProcessCommandLine)
+| extend IsSuspiciousPayload = CommandLower has_any(
+    "powershell", "cmd", "wscript", "mshta", "rundll32", "regsvr32", ".js", ".vbs", ".bat", ".ps1", "curl", "wget", "http"
+)
+| extend IsUnusualParent = InitiatingProcessFileName has_any (
+    "winword.exe", "excel.exe", "outlook.exe", "teams.exe", "chrome.exe", "firefox.exe"
+)
+| project
+    Timestamp,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine,
+    IsSuspiciousPayload,
+    IsUnusualParent
+| order by Timestamp desc
+| where IsSuspiciousPayload == 1
