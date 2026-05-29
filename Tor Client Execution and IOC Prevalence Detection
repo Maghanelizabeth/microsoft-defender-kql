@@ -1,0 +1,10 @@
+// Description: Identifies execution of Tor-related binaries and analyzes MD5 hash prevalence across enterprise devices for threat hunting and IOC-based blocking
+// Data Source: DeviceNetworkEvents
+// Severity: High (Anonymization / C2 Risk)
+// MITRE ATT&CK: T1090, T1102, T1573
+// False Positives: Security research, penetration testing, privacy tools, developer testing environments
+
+DeviceNetworkEvents  
+| where Timestamp < ago(30d) and InitiatingProcessFileName in~ ("tor.exe", "meek-client.exe")
+| summarize MachineCount=dcount(DeviceName), MachineNames=makeset(DeviceName, 5) by InitiatingProcessMD5
+| order by MachineCount desc
