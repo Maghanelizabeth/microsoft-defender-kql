@@ -1,0 +1,11 @@
+let CIDR1 = "185.186.244.0/24";
+let CIDR2 = "172.94.9.0/24";
+DeviceNetworkEvents
+| where ipv4_is_in_range(RemoteIP, CIDR1)
+    or ipv4_is_in_range(RemoteIP, CIDR2)
+| summarize
+    FirstSeen=min(Timestamp),
+    LastSeen=max(Timestamp),
+    ConnectionCount=count()
+    by RemoteIP, DeviceName, RemotePort, ActionType
+| sort by ConnectionCount desc
