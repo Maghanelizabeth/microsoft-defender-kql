@@ -1,0 +1,18 @@
+// Description: Detects devices making a high number of SMB (port 445) connections to multiple remote IPs, which may indicate lateral movement or network scanning behavior
+// MITRE ATT&CK: T1021.002, T1046
+// Data Source: DeviceNetworkEvents
+// Severity: High
+// False Positives: Backup systems, vulnerability scanners, patch management tools, enterprise file sharing systems
+
+let TimeFrame = 24h; //Customizable h = hours, d = days
+let AllDomainControllers =
+     DeviceNetworkEvents
+     | where LocalPort == 88
+     | where LocalIPType == "FourToSixMapping"
+     | summarize make_set(DeviceId);
+DeviceNetworkEvents
+| where Timestamp > ago(TimeFrame)
+| where RemotePort == 445
+| where not(DeviceId in (AllDomainControllers)) // THis is to reduce FP because of e.g. MDI, if you do not have MDI do not use this filter.
+| summarize TotalRemoteConnections = dcount(RemoteIP) by DeviceName
+| sort by TotalRemoteConnections
