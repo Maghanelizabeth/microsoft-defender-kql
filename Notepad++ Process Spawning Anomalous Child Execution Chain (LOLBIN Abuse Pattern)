@@ -1,0 +1,35 @@
+// Description: Detects abnormal execution chains where Notepad++ spawns high-risk child processes such as PowerShell, CMD, MSHTA, and Rundll32
+// Data Source: DeviceProcessEvents
+// Severity: High (Execution / LOLBIN Abuse)
+// MITRE ATT&CK: T1059, T1218, T1204
+// False Positives: Developer automation, scripting workflows, legitimate debugging or testing environments
+
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where InitiatingProcessFileName in~ ("notepad++.exe", "notepadplus.exe", "notepadpp.exe")
+// Child processes that are suspicious in this context
+| where FileName in~ (
+        "cmd.exe",
+        "powershell.exe",
+        "pwsh.exe",
+        "wscript.exe",
+        "cscript.exe",
+        "mshta.exe",
+        "rundll32.exe",
+        "regsvr32.exe",
+        "msiexec.exe",
+        "curl.exe",
+        "wget.exe"
+    )
+| project
+    Timestamp,
+    DeviceName,
+    ParentProcess      = InitiatingProcessFileName,
+    ParentFolderPath   = InitiatingProcessFolderPath,
+    ParentSHA256       = InitiatingProcessSHA256,
+    ParentCommandLine  = InitiatingProcessCommandLine,
+    ChildProcess       = FileName,
+    ChildFolderPath    = FolderPath,
+    ChildCommandLine   = ProcessCommandLine,
+    AccountName
+| order by Timestamp desc
