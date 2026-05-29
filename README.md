@@ -1,6 +1,6 @@
 Microsoft Defender KQL Queries - Eliza Belcher
 
-A collection of Kusto Query Language (KQL) queries for threat hunting, detection engineering, and incident response in Microsoft Defender XDR / Microsoft Sentinel.
+A collection of KQL queries i've written for threat hunting, detection engineering, and incident response in Microsoft Defender XDR / Microsoft Sentinel.
 
 This repository contains:
 - Threat hunting queries
