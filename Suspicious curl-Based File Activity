@@ -1,0 +1,10 @@
+// Description: Detects file system activity associated with processes using curl in their command line, which may indicate file download, staging, or malware delivery behavior
+// MITRE ATT&CK: T1105 (Ingress Tool Transfer)
+// Data Source: DeviceFileEvents
+// Severity: Medium-High
+// False Positives: Software updates, DevOps scripts, IT automation tools, package managers (e.g., installers using curl)
+
+DeviceFileEvents
+| where InitiatingProcessCommandLine contains "curl"
+| project Timestamp, DeviceName, FileName, ActionType, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath
+| order by Timestamp desc
