@@ -1,0 +1,4 @@
+DeviceProcessEvents
+| where FileName == "powershell.exe" or ProcessCommandLine contains "powershell"
+| where ProcessCommandLine has_any ("-enc", "IEX", "Invoke-", "FromBase64String")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ProcessCommandLine
