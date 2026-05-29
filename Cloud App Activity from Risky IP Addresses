@@ -1,0 +1,9 @@
+// Description: Detects cloud application events originating from IP addresses categorized as risky, potentially indicating malicious login attempts or compromised accounts
+// MITRE ATT&CK: T1078 (Valid Accounts), T1110 (Brute Force), T1071 (Application Layer Protocol)
+// Data Source: CloudAppEvents
+// Severity: High
+// False Positives: VPN users, corporate proxy exits, security researchers, travel-based logins
+
+CloudAppEvents
+| where IPCategory == "Risky"
+| project Timestamp, AccountDisplayName, ActionType, IPAddress, IPCategory, ISP, RawEventData, DeviceType
