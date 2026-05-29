@@ -1,0 +1,15 @@
+// Description: Detects filtered remote authentication activity excluding machine and test accounts to identify potential unauthorized user logons
+// Data Source: DeviceLogonEvents
+// Severity: High (Identity / Access Anomaly)
+// MITRE ATT&CK: T1021, T1078, T1110
+// False Positives: VPN logins, legitimate remote administration, IT support activity, enterprise remote access tools
+
+DeviceLogonEvents
+| where LogonType in ("Network","RemoteInteractive")
+| where isnotempty(RemoteIP)
+| where AccountName !contains "$"
+| where DeviceName !contains "sec-ads"
+| where DeviceName !contains "test"
+| where LogonType !contains "Network"
+| project Timestamp, DeviceName, RemoteIP, AccountName, LogonType
+| order by Timestamp desc
