@@ -1,0 +1,10 @@
+// Description: Monitors network traffic for a specific industrial device scope and detects communication over SCADA/ICS protocols such as Modbus, DNP3, and IEC 60870-5-104
+// Data Source: DeviceNetworkEvents
+// Severity: High (Critical Infrastructure Monitoring)
+// MITRE ATT&CK: ICS T0842, T0886
+// Category: OT Security / Industrial Monitoring
+// False Positives: Authorized SCADA communication, engineering workstation traffic, vendor maintenance operations
+
+DeviceNetworkEvents
+| where DeviceName has " "
+| where RemotePort in (502, 2404, 20000)
