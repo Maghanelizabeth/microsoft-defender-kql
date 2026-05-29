@@ -1,0 +1,9 @@
+// Description: Summarizes all device communications with a specific internal IP address to support lateral movement investigation and internal network traffic analysis
+// MITRE ATT&CK: T1021 (Remote Services), T1071 (Application Layer Protocol)
+// Data Source: DeviceNetworkEvents
+// Severity: Medium-High
+// False Positives: Normal service communication, monitoring systems, internal APIs, load balancers
+
+DeviceNetworkEvents
+| where RemoteIP == "IPADDRESS"
+| summarize count(), FirstSeen=min(Timestamp), LastSeen=max(Timestamp), Devices=makeset(DeviceName)
