@@ -1,3 +1,9 @@
+// Description: Detects Office applications spawning command shells or script interpreters, commonly associated with malicious macro execution
+// MITRE ATT&CK: T1204, T1059
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Legitimate macro-enabled business documents, IT automation via Office add-ins
+
 DeviceProcessEvents
 | where InitiatingProcessFileName in~ ("winword.exe", "excel.exe", "outlook.exe")
 | where FileName in~ ("cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe")
