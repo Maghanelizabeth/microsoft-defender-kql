@@ -1,3 +1,9 @@
+// Description: Retrieves recent network activity to Microsoft-related domains for visibility and baseline analysis
+// Data Source: DeviceNetworkEvents
+// Time Range: 30 days
+// Use Case: Network telemetry review / baseline building
+// False Positives: Expected high volume due to Windows, M365, and Azure services
+
 DeviceNetworkEvents  
 | where Timestamp > ago(30d)
 | where RemoteUrl has_any (dynamic([ "microsoft"
