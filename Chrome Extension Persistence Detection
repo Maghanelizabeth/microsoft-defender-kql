@@ -1,0 +1,18 @@
+// Description: Detects potentially malicious Chrome extension installation activity by correlating new Secure Preferences file creation with low-prevalence .crx files
+// MITRE ATT&CK: T1176, T1553.006
+// Data Source: DeviceFileEvents
+// Severity: Medium-High
+// False Positives: Enterprise-managed Chrome extensions, developer testing environments, software deployment tools
+
+let EPNewChromeConfig =
+DeviceFileEvents
+| where ActionType == "FileCreated"
+| where FileName has "Secure Preferences" and FolderPath has "Chrome"
+| distinct DeviceName;
+DeviceFileEvents
+| where ActionType == "FileCreated" and FileName endswith ".crx"
+| where DeviceName has_any(EPNewChromeConfig)
+| summarize arg_max(Timestamp, *) by SHA1
+| where isnotempty(SHA1)
+| invoke FileProfile(SHA1,10000)
+| where GlobalPrevalence <= 100
