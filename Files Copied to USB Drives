@@ -1,0 +1,26 @@
+// Description: Detects files written to removable USB storage devices by correlating USB mount events with file creation activity after mount time
+// MITRE ATT&CK: T1052.001 (Exfiltration to Physical Media)
+// Data Source: DeviceEvents, DeviceFileEvents
+// Severity: High
+// False Positives: IT administrators copying software, legitimate backups, authorized data transfer to external drives
+
+let UsbDriveMount = DeviceEvents
+| where ActionType=="UsbDriveMounted"
+| extend ParsedFields=parse_json(AdditionalFields)
+| project DeviceId, DeviceName, DriveLetter=ParsedFields.DriveLetter, MountTime=Timestamp,
+ProductName=ParsedFields.ProductName,SerialNumber=ParsedFields.SerialNumber,Manufacturer=ParsedFields.Manufacturer
+| order by DeviceId asc, MountTime desc;
+let FileCreation = DeviceFileEvents
+| where InitiatingProcessAccountName != "system"
+| where ActionType == "FileCreated"
+| where FolderPath !startswith "C:\\"
+| where FolderPath !startswith "\\"
+| project ReportId,DeviceId,InitiatingProcessAccountDomain,
+InitiatingProcessAccountName,InitiatingProcessAccountUpn,
+FileName, FolderPath, SHA256, Timestamp, SensitivityLabel, IsAzureInfoProtectionApplied
+| order by DeviceId asc, Timestamp desc;
+FileCreation | lookup kind=inner (UsbDriveMount) on DeviceId
+| where FolderPath startswith DriveLetter
+| where Timestamp >= MountTime
+| partition hint.strategy=native by ReportId ( top 1 by MountTime )
+| order by DeviceId asc, Timestamp desc
