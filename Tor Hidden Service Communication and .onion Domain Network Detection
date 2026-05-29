@@ -1,0 +1,11 @@
+// Description: Detects endpoint communication with Tor hidden services (.onion domains), indicating potential C2, data exfiltration, or anonymized infrastructure usage
+// Data Source: DeviceNetworkEvents
+// Severity: High (Anonymized / C2 Communication)
+// MITRE ATT&CK: T1090, T1071, T1102
+// False Positives: Legitimate Tor browser usage, research activity, privacy tools, security testing environments
+
+DeviceNetworkEvents //Credit: Suraj Kumar. Modified from his query
+| where Timestamp > ago(90d)
+| extend AdditionalFields_query = tostring(parse_json(AdditionalFields)["query"]) 
+| where AdditionalFields_query endswith ".onion"
+| summarize count() by AdditionalFields_query, DeviceName
