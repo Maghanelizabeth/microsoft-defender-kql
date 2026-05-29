@@ -1,0 +1,9 @@
+// Description: Detects network communication involving common industrial control system protocols including Modbus, DNP3, and IEC 60870-5-104
+// Data Source: DeviceNetworkEvents
+// Severity: Medium to High (Critical Infrastructure Context)
+// MITRE ATT&CK: T0842 (Network Service Scanning), ICS-related reconnaissance techniques
+// False Positives: Legitimate OT environments, industrial monitoring systems, engineering workstations
+
+DeviceNetworkEvents
+| where RemotePort in (502, 20000, 2404)
+| project Timestamp, DeviceName, RemoteIP, RemotePort, InitiatingProcessAccountName, AdditionalFields
