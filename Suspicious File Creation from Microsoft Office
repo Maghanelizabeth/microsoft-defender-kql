@@ -1,0 +1,11 @@
+// Description: Detects file creation activity initiated by Microsoft Word or Excel processes, which may indicate macro-based malware execution or phishing payload delivery
+// MITRE ATT&CK: T1204 (User Execution), T1566 (Phishing), T1059 (Command and Scripting Interpreter)
+// Data Source: DeviceFileEvents
+// Severity: Medium-High
+// False Positives: Legitimate document exports, Office add-ins, automation scripts, PDF/CSV exports
+
+DeviceFileEvents
+| where InitiatingProcessFileName in~ ("winword.exe", "excel.exe")
+| where ActionType == "FileCreated"
+| project Timestamp, DeviceName, FileName, FolderPath, InitiatingProcessFileName
+| order by Timestamp desc
