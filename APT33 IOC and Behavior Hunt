@@ -1,0 +1,23 @@
+// Description: Correlates known APT33-related network infrastructure, file hashes, and suspicious PowerShell execution patterns across endpoint telemetry
+// MITRE ATT&CK: T1071, T1105, T1059.001, T1204
+// Data Sources: DeviceNetworkEvents, DeviceFileEvents, DeviceProcessEvents
+// Threat Actor: APT33 (OilRig)
+// Severity: High
+// False Positives: Administrative PowerShell usage, software deployment tools, enterprise automation scripts
+
+DeviceNetworkEvents
+| where RemoteUrl in~ ("update.military-portal.com", "webmail.military-portal.com", "cdn.aviation-update.net")
+| project Timestamp, DeviceName, RemoteUrl, InitiatingProcessFileName, InitiatingProcessSHA256
+
+union DeviceFileEvents
+| where SHA256 in~ ("e99a18c428cb38d5f260853678922e03", "d41d8cd98f00b204e9800998ecf8427e")
+| project Timestamp, DeviceName, FileName, SHA256, FolderPath
+
+union DeviceProcessEvents
+| where InitiatingProcessCommandLine has_any ("powershell", "Invoke-WebRequest", "IEX")
+| where InitiatingProcessCommandLine !contains ("Defender Advanced")
+| where InitiatingProcessCommandLine !contains ("ARCOnboarding_GPO.ps1")
+| where InitiatingProcessCommandLine !contains ("AzureConnectedMachineAgent")
+| where InitiatingProcessCommandLine !contains ("Rapid7Agent Install GPO")
+| where InitiatingProcessCommandLine !contains ("Microsoft Intune Management Extension")
+| project Timestamp, DeviceName, InitiatingProcessFileName, InitiatingProcessCommandLine
