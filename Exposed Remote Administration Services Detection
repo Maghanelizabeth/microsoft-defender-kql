@@ -1,0 +1,13 @@
+// Description: Identifies devices listening on high-risk remote administration ports such as SSH, SMB, RDP, VNC, and WinRM which may indicate attack surface exposure
+// Data Source: DeviceNetworkEvents
+// Severity: Medium to High (Attack Surface Exposure)
+// MITRE ATT&CK: T1021, T1133
+// Category: Attack Surface Management / Exposure Monitoring
+// False Positives: Server infrastructure, IT admin systems, authorized remote management endpoints
+
+let RemoteServices = dynamic([22, 139, 445, 3389, 5900, 5985, 5986]);
+DeviceNetworkEvents
+| where ActionType == "ListeningConnectionCreated"
+| where LocalPort in (RemoteServices)
+| summarize OpenPorts = make_set(LocalPort), TotalOpenRemoteServicesPorts = dcount(LocalPort) by DeviceName
+| sort by TotalOpenRemoteServicesPorts
