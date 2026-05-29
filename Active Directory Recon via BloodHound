@@ -1,0 +1,18 @@
+// Description: Detects execution of BloodHound-related commands used for Active Directory reconnaissance and graph mapping
+// MITRE ATT&CK: T1069, T1087, T1018
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Red team exercises, penetration testing tools, security audits using BloodHound
+
+let BloodhoundCommands = dynamic(['-collectionMethod', 'invoke-bloodhound' ,'get-bloodHounddata']);
+DeviceProcessEvents
+| where ProcessCommandLine has_any (BloodhoundCommands)
+| project
+     Timestamp,
+     DeviceName,
+     AccountName,
+     AccountDomain,
+     ProcessCommandLine,
+     FileName,
+     InitiatingProcessCommandLine,
+     InitiatingProcessFileName
