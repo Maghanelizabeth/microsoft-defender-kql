@@ -1,0 +1,9 @@
+// Description: Detects execution of PsExec indicating potential lateral movement and remote command execution across endpoints
+// Data Source: DeviceNetworkEvents
+// Severity: High (Lateral Movement)
+// MITRE ATT&CK: T1021.002, T1078
+// False Positives: IT administration, endpoint management tools, system automation scripts, authorized remote support activity
+
+DeviceNetworkEvents
+| where InitiatingProcessFileName =~ "psexec.exe"
+| project Timestamp, DeviceName, RemoteIP, InitiatingProcessAccountName, InitiatingProcessCommandLine
