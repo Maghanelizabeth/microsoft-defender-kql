@@ -1,0 +1,9 @@
+// Description: Detects remote interactive logons (RDP sessions) originating from public IP addresses indicating potential unauthorized external access or credential compromise
+// Data Source: DeviceLogonEvents
+// Severity: High (Unauthorized Access / External Exposure)
+// MITRE ATT&CK: T1021.001, T1110, T1078
+// False Positives: Legitimate VPN access, authorized remote administration, IT support sessions from external networks
+
+DeviceLogonEvents
+| where RemoteIPType == "Public" and LogonType == "RemoteInteractive"
+| project Timestamp, DeviceName, AccountName, RemoteIP
