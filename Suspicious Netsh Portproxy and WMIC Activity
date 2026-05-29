@@ -1,0 +1,8 @@
+// Description: Detects potential lateral movement and network pivoting using netsh portproxy (v4tov4) combined with WMIC process execution, commonly used in post-exploitation scenarios
+// MITRE ATT&CK: T1090 (Proxy), T1021 (Remote Services), T1047 (WMIC)
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: IT administration scripts, network configuration tools, remote support utilities
+
+DeviceProcessEvents
+| where ProcessCommandLine has_all ("portproxy", "netsh", "wmic", "process call create", "v4tov4")
