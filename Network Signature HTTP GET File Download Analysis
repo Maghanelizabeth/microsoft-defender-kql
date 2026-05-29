@@ -1,0 +1,21 @@
+// Description: Analyzes HTTP GET traffic using network signature inspection to summarize downloaded file types by extension, useful for identifying potentially malicious or unusual file delivery patterns
+// MITRE ATT&CK: T1105 (Ingress Tool Transfer), T1071 (Application Layer Protocol)
+// Data Source: DeviceNetworkEvents
+// Severity: Low-Medium (hunting / visibility query)
+// False Positives: Software updates, patch distribution, browser downloads, enterprise installers
+
+DeviceNetworkEvents
+| where ActionType == "NetworkSignatureInspected"
+| extend
+     SignatureName = tostring(parse_json(AdditionalFields).SignatureName),
+     SignatureMatchedContent = tostring(parse_json(AdditionalFields).SignatureMatchedContent),
+     SamplePacketContent = tostring(parse_json(AdditionalFields).SamplePacketContent)
+| where SignatureName == "HTTP_Client"
+| extend HTTP_Request_Method = tostring(split(SignatureMatchedContent, " /", 0)[0])
+| where HTTP_Request_Method == "GET"
+| extend DownloadedContent = extract(@'.*/(.*)HTTP', 1, SignatureMatchedContent)
+| extend DownloadContentFileExtention = extract(@'.*\.(.*)$', 1, DownloadedContent)
+// limit DownloadContentFileExtention size to reduce false positives
+| where isnotempty(DownloadContentFileExtention) and string_size(DownloadContentFileExtention) < 8
+| summarize Total = count() by DownloadContentFileExtention
+| sort by Total
