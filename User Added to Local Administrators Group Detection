@@ -1,0 +1,10 @@
+// Description: Detects addition of user accounts to the local Administrators group, indicating potential privilege escalation or unauthorized access elevation
+// Data Source: DeviceEvents
+// Severity: High (Privilege Escalation)
+// MITRE ATT&CK: T1098, T1078
+// False Positives: IT administrative provisioning, endpoint onboarding, automated deployment scripts
+
+DeviceEvents
+| where ActionType == "UserAccountAddedToLocalGroup"
+| where AdditionalFields contains "Administrators"
+| project Timestamp, DeviceName, ReportId, InitiatingProcessAccountName, AdditionalFields, DeviceId
