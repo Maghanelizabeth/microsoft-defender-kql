@@ -1,0 +1,10 @@
+// Description: Detects PowerShell execution patterns including obfuscation, encoded commands, and in-memory execution techniques commonly used in malware and post-exploitation activity
+// Data Source: DeviceProcessEvents
+// Severity: High (Script Execution / Malware)
+// MITRE ATT&CK: T1059.001, T1027, T1105
+// False Positives: IT automation scripts, endpoint management tools, system administration tasks, cloud deployment tooling
+
+DeviceProcessEvents
+| where FileName == "powershell.exe" or ProcessCommandLine contains "powershell"
+| where ProcessCommandLine has_any ("-enc", "IEX", "Invoke-", "FromBase64String")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ProcessCommandLine
