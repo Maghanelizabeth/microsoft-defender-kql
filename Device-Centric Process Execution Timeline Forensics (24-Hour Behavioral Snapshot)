@@ -1,0 +1,10 @@
+// Description: Retrieves all process execution activity for a specific device within a 24-hour window for forensic investigation and incident response
+// Data Source: DeviceProcessEvents
+// Severity: Informational (Forensic / IR Query)
+// Category: Endpoint Investigation / Host Forensics
+// False Positives: None (investigative-only query)
+
+DeviceProcessEvents
+| where DeviceName has "<device name>"
+| where Timestamp > ago(24h)
+| project Timestamp, FileName, ProcessCommandLine, InitiatingProcessAccountName
