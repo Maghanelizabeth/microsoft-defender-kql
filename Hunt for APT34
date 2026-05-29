@@ -1,3 +1,10 @@
+// Description: Detects suspicious LOLBIN usage, PowerShell abuse, reconnaissance commands, download cradles, and DNS-related activity associated with adversary tradecraft
+// MITRE ATT&CK: T1059, T1218, T1105, T1016, T1046, T1071.004
+// Threat Actor Association: APT34 / OilRig-inspired behaviors
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: IT automation tools, management agents, software deployment platforms
+
 DeviceProcessEvents
 | where Timestamp > ago(14d)
 | where InitiatingProcessCommandLine != "svchost.exe -k LocalService -p -s WebClient"
