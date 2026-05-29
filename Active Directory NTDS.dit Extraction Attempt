@@ -1,0 +1,8 @@
+// Description: Detects potential misuse of NTDSUtil to create full backups of Active Directory database, which may indicate credential dumping from Domain Controllers
+// MITRE ATT&CK: T1003.003 (NTDS), T1484.001 (Domain Policy Modification Abuse Context)
+// Data Source: DeviceProcessEvents
+// Severity: Critical
+// False Positives: Legitimate domain controller backups performed by enterprise backup tools or IT administrators
+
+DeviceProcessEvents
+| where ProcessCommandLine has_all ("ntdsutil", "create full", "pro")
