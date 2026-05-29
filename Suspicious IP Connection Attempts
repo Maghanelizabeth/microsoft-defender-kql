@@ -1,0 +1,18 @@
+// Description: Detects device communications with known suspicious IP addresses and summarizes connection frequency and time range for investigation
+// MITRE ATT&CK: T1071, T1105
+// Data Source: DeviceNetworkEvents
+// Severity: High
+// False Positives: Shared hosting services, VPN endpoints, proxy infrastructure, legitimate cloud reuse of IP space
+
+let SuspiciousIPs = dynamic([
+"185.93.89.37",
+"185.93.89.138"
+]);
+DeviceNetworkEvents
+| where RemoteIP in (SuspiciousIPs)
+| summarize
+    Attempts=count(),
+    FirstSeen=min(Timestamp),
+    LastSeen=max(Timestamp)
+    by DeviceName, LocalIP, RemoteIP, RemotePort
+| sort by Attempts desc
