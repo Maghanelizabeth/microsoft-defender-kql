@@ -1,0 +1,13 @@
+// Description: Detects execution of PowerShell with encoded commands (-EncodedCommand / -enc), commonly used for obfuscation and fileless malware execution
+// MITRE ATT&CK: T1059.001, T1027
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Legitimate administrative automation, enterprise deployment scripts, cloud management agents
+
+DeviceProcessEvents
+| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+| where ProcessCommandLine has "-EncodedCommand" or ProcessCommandLine has "-enc"
+| where InitiatingProcessCommandLine !contains "gc_worker.exe"
+| where InitiatingProcessCommandLine !contains "gc_extension_service.exe"
+| where InitiatingProcessCommandLine !contains "microsoft.management.services.cloudmanageddesktop.agent.exe"
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, ProcessCommandLine, AccountName
