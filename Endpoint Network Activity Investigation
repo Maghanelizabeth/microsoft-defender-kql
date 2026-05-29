@@ -1,0 +1,10 @@
+// Description: Retrieves full network activity and process attribution for a specific endpoint to support forensic investigation and incident response
+// Data Source: DeviceNetworkEvents
+// Severity: Informational (Forensic / IR Query)
+// Category: Incident Response / Host Investigation
+// False Positives: None (investigative query, not a detection rule)
+
+DeviceNetworkEvents
+| where DeviceName == "  "
+| project DeviceName, Timestamp, LocalPort, Protocol, InitiatingProcessFileName, InitiatingProcessCommandLine
+| sort by Timestamp desc
