@@ -1,0 +1,9 @@
+// Description: Detects execution of WMIC (Windows Management Instrumentation Command-line tool), often abused for reconnaissance, lateral movement, and remote execution
+// Data Source: DeviceProcessEvents
+// Severity: Medium to High (LOLBIN Abuse / Lateral Movement)
+// MITRE ATT&CK: T1047, T1059, T1021
+// False Positives: IT administration, system monitoring tools, enterprise automation scripts
+
+DeviceProcessEvents
+| where ProcessCommandLine has "wmic" or FileName == "wmic.exe"
+| project Timestamp, DeviceName, ProcessCommandLine, InitiatingProcessAccountName
