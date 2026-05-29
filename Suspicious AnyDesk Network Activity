@@ -1,0 +1,11 @@
+// Description: Detects network connections initiated by AnyDesk remote access tool excluding trusted endpoints to identify potential unauthorized remote access activity
+// Data Source: DeviceNetworkEvents
+// Severity: Medium to High (Remote Access / Persistence)
+// MITRE ATT&CK: T1219, T1133
+// False Positives: IT support activity, helpdesk operations, authorized remote administration
+
+DeviceNetworkEvents
+| where InitiatingProcessFileName =~ "AnyDesk.exe"
+| where DeviceName !contains "  "
+| project Timestamp, DeviceName, RemoteIP, RemotePort, RemoteUrl
+| order by Timestamp desc
