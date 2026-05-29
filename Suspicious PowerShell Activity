@@ -1,3 +1,9 @@
+// Description: Detects potentially malicious PowerShell usage including encoded commands, IEX execution, and base64 decoding patterns
+// MITRE ATT&CK: T1059.001, T1027
+// Data Source: DeviceProcessEvents
+// Severity: High
+// False Positives: Admin scripts, IT automation, software deployment tools using PowerShell
+
 DeviceProcessEvents
 | where FileName == "powershell.exe" or ProcessCommandLine contains "powershell"
 | where ProcessCommandLine has_any ("-enc", "IEX", "Invoke-", "FromBase64String")
