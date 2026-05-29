@@ -1,0 +1,4 @@
+DeviceFileEvents
+| where FileName contains "bridge.exe"
+| project Timestamp, DeviceName, FileName, ActionType, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessFolderPath 
+| order by Timestamp desc
