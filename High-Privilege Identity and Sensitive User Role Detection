@@ -1,0 +1,14 @@
+// Description: Identifies accounts with sensitive tags or privileged roles such as Global Administrator and Security Administrator in Entra ID
+// Data Source: IdentityInfo
+// Severity: Informational (Identity Governance)
+// Category: Identity & Access Management (IAM)
+// False Positives: Service accounts, break-glass accounts, legacy admin assignments
+
+IdentityInfo
+| extend SensitiveUser = Tags has "Sensitive"
+| extend GlobalAdministrator = AssignedRoles has "Global Administrator"
+| extend SecurityAdministrator = set_has_element(AssignedRoles, "Security Administrator")
+| where SensitiveUser or GlobalAdministrator or SecurityAdministrator
+| summarize arg_max(Timestamp, *) by AccountObjectId, OnPremSid, CloudSid
+| where Timestamp > ago(14d)
+| project-away SensitiveUser, GlobalAdministrator, SecurityAdministrator
