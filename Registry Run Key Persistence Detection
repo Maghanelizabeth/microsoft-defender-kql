@@ -1,0 +1,13 @@
+// Description: Detects modifications to Windows Registry Run, RunOnce, and Startup folder keys used for persistence mechanisms
+// MITRE ATT&CK: T1547.001
+// Data Source: DeviceRegistryEvents
+// Severity: High
+// False Positives: Legitimate software auto-start entries (OneDrive, Dropbox, Google Drive, enterprise sync tools)
+
+DeviceRegistryEvents
+| where RegistryKey has @"Software\Microsoft\Windows\CurrentVersion\Run"
+    or RegistryKey has @"Software\Microsoft\Windows\CurrentVersion\RunOnce"
+    or RegistryKey has @"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\Startup"
+| where RegistryValueName !in ("OneDrive", "Dropbox", "GoogleDrive")  // exclude common legit entries
+| project Timestamp, DeviceName, InitiatingProcessFileName, RegistryKey, RegistryValueName, RegistryValueData
+| order by Timestamp desc
