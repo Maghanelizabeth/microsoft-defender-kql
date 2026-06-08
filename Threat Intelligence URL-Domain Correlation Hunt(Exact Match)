@@ -1,0 +1,99 @@
+// Description: Searches Microsoft Defender XDR telemetry for exact URL matches against user-supplied threat intelligence indicators. Correlates sightings across email, endpoint, Safe Links, and alert data sources to identify exposure, user interaction, network communication, and existing detections associated with known or suspected malicious URLs. Matching is performed against the full normalized URL, including path and query string, to reduce noise and improve precision.
+// MITRE ATT&CK: T1566, T1566.001, T1566.002, T1071.001
+// Data Sources: EmailUrlInfo, EmailEvents, UrlClickEvents, DeviceNetworkEvents, AlertEvidence, AlertInfo
+// Threat Actor: Threat-Intel IOC Lookup (Actor Agnostic)
+// Severity: Informational / Investigative
+// False Positives: Security testing activities, threat-hunting validation, sandbox detonation traffic, legitimate business access to monitored URLs, benign infrastructure that has previously been associated with malicious activity
+
+// ============================================================================
+// Defender XDR  —  URL Threat-Intel Lookup  (EXACT full-URL match, no LET)
+// ----------------------------------------------------------------------------
+// Edit the list in ONE place (the datatable below). Matching is now on the
+// FULL URL, not the hostname -- this is the strict, low-noise mode.
+//
+// Both your input and the event URLs are normalized identically before the
+// join: lowercased + trailing "/" stripped. Path and query string ARE part of
+// the match, so "site.com/a" and "site.com/a?x=1" are treated as different.
+// Enter complete URLs (scheme + host + path), e.g. https://site.com/login.
+//
+// No let statements. isfuzzy=true skips tables your tenant lacks. Adjust
+// ago(30d) for the lookback.
+// ============================================================================
+
+// ===================  EDIT ONLY THIS LIST  ==================================
+datatable(InputUrl: string)
+[
+    "http://malicious-example.com/login.php",
+    "https://phish.example.org/account/verify"
+]
+// ============================================================================
+| extend UrlKey = tolower(trim_end(@"/+", trim(@"\s+", InputUrl)))
+| where isnotempty(UrlKey)
+| join kind=inner (
+    union isfuzzy=true kind=outer
+    (
+        EmailUrlInfo
+        | where Timestamp > ago(30d)
+        | join kind=leftouter (
+            EmailEvents
+            | where Timestamp > ago(30d)
+            | project NetworkMessageId, SenderFromAddress, RecipientEmailAddress,
+                      Subject, ThreatTypes, ThreatNames, DetectionMethods, DeliveryAction
+          ) on NetworkMessageId
+        | project Timestamp, Source = "Email", MatchedUrl = Url,
+                  UrlKey = tolower(trim_end(@"/+", Url)),
+                  ThreatTypes, ThreatNames, DetectionMethods,
+                  Detail = strcat("From: ", SenderFromAddress, " | To: ", RecipientEmailAddress,
+                                  " | Subj: ", Subject, " | Delivery: ", DeliveryAction)
+    ),
+    (
+        UrlClickEvents
+        | where Timestamp > ago(30d)
+        | project Timestamp, Source = "SafeLinksClick", MatchedUrl = Url,
+                  UrlKey = tolower(trim_end(@"/+", Url)),
+                  ThreatTypes, ThreatNames = "", DetectionMethods = "",
+                  Detail = strcat("User: ", AccountUpn, " | Action: ", ActionType,
+                                  " | ClickedThrough: ", tostring(IsClickedThrough),
+                                  " | Workload: ", Workload)
+    ),
+    (
+        DeviceNetworkEvents
+        | where Timestamp > ago(30d)
+        | where isnotempty(RemoteUrl)
+        | project Timestamp, Source = "DeviceNetwork", MatchedUrl = RemoteUrl,
+                  UrlKey = tolower(trim_end(@"/+", RemoteUrl)),
+                  ThreatTypes = "", ThreatNames = "", DetectionMethods = ActionType,
+                  Detail = strcat("Device: ", DeviceName, " | RemoteIP: ", RemoteIP,
+                                  " | Process: ", InitiatingProcessFileName,
+                                  " | User: ", InitiatingProcessAccountName)
+    ),
+    (
+        AlertEvidence
+        | where Timestamp > ago(30d)
+        | where EntityType == "Url" and isnotempty(RemoteUrl)
+        | join kind=leftouter (
+            AlertInfo
+            | where Timestamp > ago(30d)
+            | project AlertId, Title, Severity, Category, ServiceSource, DetectionSource
+          ) on AlertId
+        | project Timestamp, Source = "Alert", MatchedUrl = RemoteUrl,
+                  UrlKey = tolower(trim_end(@"/+", RemoteUrl)),
+                  ThreatTypes = Category, ThreatNames = Title, DetectionMethods = DetectionSource,
+                  Detail = strcat("Severity: ", Severity, " | ServiceSource: ", ServiceSource,
+                                  " | AlertId: ", AlertId)
+    )
+) on UrlKey
+| summarize
+    Sightings        = count(),
+    FirstSeen        = min(Timestamp),
+    LastSeen         = max(Timestamp),
+    SeenIn           = make_set(Source),
+    ThreatTypes      = make_set(ThreatTypes),
+    ThreatNames      = make_set(ThreatNames),
+    DetectionMethods = make_set(DetectionMethods),
+    SampleUrls       = make_set(MatchedUrl, 10)
+    by Url = UrlKey
+| extend Verdict = iff(SeenIn has "Alert", "MATCHED ALERT - investigate",
+                   iff(array_length(ThreatTypes) > 1 or (array_length(ThreatTypes) == 1 and tostring(ThreatTypes[0]) != ""),
+                       "Flagged by a workload", "Seen, no threat verdict"))
+| sort by Sightings desc
